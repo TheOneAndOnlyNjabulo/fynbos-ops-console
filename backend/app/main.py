@@ -9,6 +9,7 @@ from pydantic import BaseModel
 # and this file won't exist - load_dotenv() silently no-ops rather than erroring.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
+from app.db import log_agent_run  # noqa: E402
 from app.rag_chain import answer_question  # noqa: E402
 from app.support_agent import run_support  # noqa: E402
 
@@ -58,7 +59,26 @@ def support(body: SupportRequest) -> SupportResponse:
     try:
         run = run_support(body.email_text)
     except Exception:
+        log_agent_run(
+            module="support",
+            input_payload={"email_text": body.email_text},
+            draft=None,
+            verdict=None,
+            critique=None,
+            final=None,
+            citations=[],
+        )
         raise HTTPException(status_code=502, detail="Failed to process this email. Please try again.")
+
+    log_agent_run(
+        module="support",
+        input_payload={"email_text": run.email_text},
+        draft={"category": run.draft.category, "draft_reply": run.draft.draft_reply},
+        verdict=run.checker.verdict,
+        critique=run.checker.critique,
+        final={"category": run.final.category, "draft_reply": run.final.draft_reply},
+        citations=run.citations,
+    )
 
     return SupportResponse(
         draft=SupportDraftResponse(**run.draft.__dict__),
@@ -90,7 +110,27 @@ def chat(body: ChatRequest) -> ChatResponse:
     try:
         result = answer_question(body.question)
     except Exception:
+        log_agent_run(
+            module="chat",
+            input_payload={"question": body.question},
+            draft=None,
+            verdict=None,
+            critique=None,
+            final=None,
+            citations=[],
+        )
         raise HTTPException(status_code=502, detail="Failed to generate an answer. Please try again.")
+
+    citations = [f"{s.document} §{s.section}" for s in result.sources]
+    log_agent_run(
+        module="chat",
+        input_payload={"question": body.question},
+        draft=None,
+        verdict=None,
+        critique=None,
+        final={"answer": result.answer},
+        citations=citations,
+    )
 
     return ChatResponse(
         answer=result.answer,
