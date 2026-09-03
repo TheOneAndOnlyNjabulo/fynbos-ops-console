@@ -188,46 +188,70 @@ def _dedupe_citations(chunks: list[RetrievedChunk]) -> list[str]:
     return citations
 
 
+# Bounds how many revise-and-recheck cycles run after the first rejection. Observed
+# during testing: a revision that correctly fixed one flagged error (a wrong shipping-
+# cost claim) introduced a NEW, previously-correct claim being wrong (the refund
+# timeline flipped from the right figure to a wrong one) - because the original
+# design (one revision, never re-checked, same as Marula's) had no way to catch a
+# regression introduced by the fix itself. Re-checking the revision closes that gap;
+# capping it at 2 extra attempts bounds the cost of a persistently-wrong draft.
+MAX_REVISION_ATTEMPTS = 2
+
+
 def run_support(email_text: str, top_k: int = 7) -> SupportRun:
     draft_chain = _get_draft_chain()
     draft_out: DraftOutput = draft_chain.invoke({"email_text": email_text})
     draft = SupportDraft(category=draft_out.category, draft_reply=draft_out.draft_reply)
 
-    # The Checker's retrieval query includes the drafted reply itself, not just the raw
-    # email - this surfaces the specific policy sections that would confirm or contradict
-    # the SPECIFIC claims the reply makes, not just generic sections about the topic.
-    query = f"{email_text}\n\nCategory: {draft.category}\nDraft reply: {draft.draft_reply}"
-    chunks = retrieve(query, top_k=top_k)
-    context = _format_context(chunks)
-    citations = _dedupe_citations(chunks)
-
     checker_chain = _get_checker_chain()
-    verdict_out: CheckerOutput = checker_chain.invoke(
-        {
-            "email_text": email_text,
-            "category": draft.category,
-            "draft_reply": draft.draft_reply,
-            "context": context,
-        }
-    )
-    checker = CheckerVerdict(
-        verdict=verdict_out.verdict,
-        citation=verdict_out.citation,
-        critique=verdict_out.critique,
-        corrected_category=verdict_out.corrected_category,
-    )
-
-    if verdict_out.verdict == "approved":
-        return SupportRun(email_text, draft, checker, draft, citations)
-
     revision_chain = _get_revision_chain()
-    revised_out: DraftOutput = revision_chain.invoke(
-        {
-            "email_text": email_text,
-            "category": draft.category,
-            "citation": verdict_out.citation,
-            "critique": verdict_out.critique,
-        }
-    )
-    final = SupportDraft(category=revised_out.category, draft_reply=revised_out.draft_reply)
-    return SupportRun(email_text, draft, checker, final, citations)
+
+    current = draft
+    first_checker: CheckerVerdict | None = None
+    citations: list[str] = []
+
+    for attempt in range(MAX_REVISION_ATTEMPTS + 1):
+        # The Checker's retrieval query includes the drafted reply itself, not just the
+        # raw email - this surfaces the specific policy sections that would confirm or
+        # contradict the SPECIFIC claims the reply makes, not just generic sections
+        # about the topic. Re-run every attempt, since a revised reply's claims can
+        # differ enough to need different supporting context than the original draft's.
+        query = f"{email_text}\n\nCategory: {current.category}\nDraft reply: {current.draft_reply}"
+        chunks = retrieve(query, top_k=top_k)
+        context = _format_context(chunks)
+        citations = _dedupe_citations(chunks)
+
+        verdict_out: CheckerOutput = checker_chain.invoke(
+            {
+                "email_text": email_text,
+                "category": current.category,
+                "draft_reply": current.draft_reply,
+                "context": context,
+            }
+        )
+        verdict = CheckerVerdict(
+            verdict=verdict_out.verdict,
+            citation=verdict_out.citation,
+            critique=verdict_out.critique,
+            corrected_category=verdict_out.corrected_category,
+        )
+        if first_checker is None:
+            # Displayed in the UI's stage-2 card - always the FIRST verdict, so the
+            # audit trail shows what was originally wrong, not the outcome of a later
+            # silent re-check.
+            first_checker = verdict
+
+        if verdict_out.verdict == "approved" or attempt == MAX_REVISION_ATTEMPTS:
+            return SupportRun(email_text, draft, first_checker, current, citations)
+
+        revised_out: DraftOutput = revision_chain.invoke(
+            {
+                "email_text": email_text,
+                "category": current.category,
+                "citation": verdict_out.citation,
+                "critique": verdict_out.critique,
+            }
+        )
+        current = SupportDraft(category=revised_out.category, draft_reply=revised_out.draft_reply)
+
+    raise AssertionError("unreachable")  # loop always returns via the branch above
