@@ -11,6 +11,7 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from app.db import log_agent_run  # noqa: E402
 from app.extraction_agent import run_extraction  # noqa: E402
+from app.meeting_agent import run_meeting_notes  # noqa: E402
 from app.rag_chain import answer_question  # noqa: E402
 from app.support_agent import run_support  # noqa: E402
 
@@ -237,5 +238,70 @@ async def extract(file: UploadFile = File(...)) -> ExtractResponse:
             citation=run.validation.citation,
             issues=run.validation.issues,
         ),
+        citations=run.citations,
+    )
+
+
+class MeetingNotesRequest(BaseModel):
+    transcript: str
+
+
+class ActionItemResponse(BaseModel):
+    task: str
+    owner: str
+    due_date: str
+
+
+class GroundingResultResponse(BaseModel):
+    task: str
+    grounded: bool
+    supporting_quote: str
+    reason: str
+
+
+class MeetingNotesResponse(BaseModel):
+    summary: str
+    all_action_items: list[ActionItemResponse]
+    grounding_results: list[GroundingResultResponse]
+    final_action_items: list[ActionItemResponse]
+    citations: list[str]
+
+
+@app.post("/meeting-notes")
+def meeting_notes(body: MeetingNotesRequest) -> MeetingNotesResponse:
+    if not body.transcript.strip():
+        raise HTTPException(status_code=422, detail="transcript must not be empty")
+
+    try:
+        run = run_meeting_notes(body.transcript)
+    except Exception:
+        log_agent_run(
+            module="meeting",
+            input_payload={"transcript": body.transcript},
+            draft=None,
+            verdict=None,
+            critique=None,
+            final=None,
+            citations=[],
+        )
+        raise HTTPException(status_code=502, detail="Failed to process this transcript. Please try again.")
+
+    all_items_payload = [item.model_dump() for item in run.all_action_items]
+    final_items_payload = [item.model_dump() for item in run.final_action_items]
+    log_agent_run(
+        module="meeting",
+        input_payload={"transcript": body.transcript},
+        draft={"summary": run.summary, "action_items": all_items_payload},
+        verdict=f"{run.grounded_count}/{run.total_count} action items grounded",
+        critique="; ".join(r.reason for r in run.grounding_results if not r.grounded) or None,
+        final={"summary": run.summary, "action_items": final_items_payload},
+        citations=run.citations,
+    )
+
+    return MeetingNotesResponse(
+        summary=run.summary,
+        all_action_items=[ActionItemResponse(**item.model_dump()) for item in run.all_action_items],
+        grounding_results=[GroundingResultResponse(**r.model_dump()) for r in run.grounding_results],
+        final_action_items=[ActionItemResponse(**item.model_dump()) for item in run.final_action_items],
         citations=run.citations,
     )
