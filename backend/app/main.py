@@ -1,12 +1,15 @@
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 # Loads backend/.env for local dev. In production env vars are injected directly,
 # and this file won't exist - load_dotenv() silently no-ops rather than erroring.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from app.support_agent import run_support  # noqa: E402
 
 app = FastAPI(title="Fynbos Ops Console API")
 
@@ -21,3 +24,44 @@ app.add_middleware(
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+class SupportRequest(BaseModel):
+    email_text: str
+
+
+class SupportDraftResponse(BaseModel):
+    category: str
+    draft_reply: str
+
+
+class CheckerVerdictResponse(BaseModel):
+    verdict: str
+    citation: str
+    critique: str
+    corrected_category: str
+
+
+class SupportResponse(BaseModel):
+    draft: SupportDraftResponse
+    checker: CheckerVerdictResponse
+    final: SupportDraftResponse
+    citations: list[str]
+
+
+@app.post("/support")
+def support(body: SupportRequest) -> SupportResponse:
+    if not body.email_text.strip():
+        raise HTTPException(status_code=422, detail="email_text must not be empty")
+
+    try:
+        run = run_support(body.email_text)
+    except Exception:
+        raise HTTPException(status_code=502, detail="Failed to process this email. Please try again.")
+
+    return SupportResponse(
+        draft=SupportDraftResponse(**run.draft.__dict__),
+        checker=CheckerVerdictResponse(**run.checker.__dict__),
+        final=SupportDraftResponse(**run.final.__dict__),
+        citations=run.citations,
+    )
