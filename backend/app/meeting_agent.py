@@ -68,7 +68,7 @@ class MeetingNotesRun:
 
     @property
     def total_count(self) -> int:
-        return len(self.grounding_results)
+        return len(self.all_action_items)
 
 
 EXTRACTION_SYSTEM_PROMPT = """You are the Extraction Agent for Fynbos Retail's meeting notes tool, a fictional \
@@ -136,6 +136,29 @@ def _get_grounding_chain():
     return _grounding_chain
 
 
+def _align_results(items: list[ActionItem], results: list[ItemGroundingResult]) -> list[ItemGroundingResult]:
+    """Pad or truncate the checker's results to exactly one per item.
+
+    The model is asked for exactly one result per action item, but structured
+    output isn't guaranteed to honor that count. A naive zip() would silently
+    drop any item past the shorter list - in this module specifically, that
+    means an item skips the grounding check entirely and disappears without
+    ever being flagged as ungrounded, which defeats the module's whole
+    purpose. Any unmatched item is instead treated as not grounded, with an
+    explicit reason, so it's visibly rejected rather than silently missing.
+    """
+    aligned = list(results[: len(items)])
+    for item in items[len(aligned) :]:
+        aligned.append(
+            ItemGroundingResult(
+                task=item.task,
+                grounded=False,
+                reason="Grounding Checker did not return a result for this item; treated as not grounded rather than silently dropped.",
+            )
+        )
+    return aligned
+
+
 def _format_items(items: list[ActionItem]) -> str:
     lines = []
     for i, item in enumerate(items, start=1):
@@ -189,7 +212,7 @@ def run_meeting_notes(transcript: str, top_k: int = 3) -> MeetingNotesRun:
     # Match results back to items by position, not by re-parsing the echoed task text -
     # the model was asked to preserve order, and position is a more robust join than
     # string-matching a paraphrase-prone "task" echo.
-    results = grounding_out.results
+    results = _align_results(extraction.action_items, grounding_out.results)
     final_items = [item for item, result in zip(extraction.action_items, results) if result.grounded]
 
     return MeetingNotesRun(

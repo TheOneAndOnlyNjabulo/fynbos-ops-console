@@ -59,6 +59,7 @@ class ValidationOutput(BaseModel):
 
 @dataclass
 class ArithmeticCheck:
+    line_item_issues: list[str]
     line_items_reconcile: bool
     line_items_sum: float
     subtotal_plus_vat_reconciles: bool
@@ -66,10 +67,10 @@ class ArithmeticCheck:
 
     @property
     def has_discrepancy(self) -> bool:
-        return not (self.line_items_reconcile and self.subtotal_plus_vat_reconciles)
+        return bool(self.line_item_issues) or not (self.line_items_reconcile and self.subtotal_plus_vat_reconciles)
 
     def describe(self) -> str:
-        lines = []
+        lines = list(self.line_item_issues)
         if not self.line_items_reconcile:
             lines.append(
                 f"Line items sum to R{self.line_items_sum:.2f} but the invoice states a subtotal that doesn't "
@@ -140,9 +141,19 @@ def _get_checker_llm() -> ChatGoogleGenerativeAI:
 
 
 def _check_arithmetic(extraction: ExtractionOutput) -> ArithmeticCheck:
+    line_item_issues = []
+    for li in extraction.line_items:
+        expected_total = li.quantity * li.unit_price
+        if abs(expected_total - li.line_total) > ARITHMETIC_TOLERANCE:
+            line_item_issues.append(
+                f"'{li.description}': {li.quantity} x R{li.unit_price:.2f} = R{expected_total:.2f}, "
+                f"but the line states R{li.line_total:.2f}."
+            )
+
     line_items_sum = sum(li.line_total for li in extraction.line_items)
     computed_total = extraction.subtotal + extraction.vat_amount
     return ArithmeticCheck(
+        line_item_issues=line_item_issues,
         line_items_reconcile=abs(line_items_sum - extraction.subtotal) <= ARITHMETIC_TOLERANCE,
         line_items_sum=line_items_sum,
         subtotal_plus_vat_reconciles=abs(computed_total - extraction.grand_total) <= ARITHMETIC_TOLERANCE,
