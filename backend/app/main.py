@@ -1,4 +1,6 @@
+from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, HTTPException, UploadFile
@@ -9,7 +11,7 @@ from pydantic import BaseModel
 # and this file won't exist - load_dotenv() silently no-ops rather than erroring.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from app.db import log_agent_run  # noqa: E402
+from app.db import get_agent_run, list_agent_runs, log_agent_run  # noqa: E402
 from app.extraction_agent import run_extraction  # noqa: E402
 from app.meeting_agent import run_meeting_notes  # noqa: E402
 from app.rag_chain import answer_question  # noqa: E402
@@ -305,3 +307,37 @@ def meeting_notes(body: MeetingNotesRequest) -> MeetingNotesResponse:
         final_action_items=[ActionItemResponse(**item.model_dump()) for item in run.final_action_items],
         citations=run.citations,
     )
+
+
+class AgentRunSummaryResponse(BaseModel):
+    id: str
+    module: str
+    input: dict[str, Any]
+    verdict: str | None
+    created_at: datetime
+
+
+class AgentRunDetailResponse(BaseModel):
+    id: str
+    module: str
+    input: dict[str, Any]
+    draft: dict[str, Any] | None
+    verdict: str | None
+    critique: str | None
+    final: dict[str, Any] | None
+    citations: list[str]
+    created_at: datetime
+
+
+@app.get("/admin/runs")
+def admin_list_runs(module: str | None = None) -> list[AgentRunSummaryResponse]:
+    rows = list_agent_runs(module=module)
+    return [AgentRunSummaryResponse(**{**row, "id": str(row["id"])}) for row in rows]
+
+
+@app.get("/admin/runs/{run_id}")
+def admin_get_run(run_id: str) -> AgentRunDetailResponse:
+    row = get_agent_run(run_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="Agent run not found")
+    return AgentRunDetailResponse(**{**row, "id": str(row["id"]), "citations": row["citations"] or []})

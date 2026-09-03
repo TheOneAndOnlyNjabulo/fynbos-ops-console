@@ -1,3 +1,4 @@
+import type { AgentRunDetail, AgentRunSummary } from "@/lib/admin-types"
 import type { Source } from "@/lib/chat-types"
 import type { ExtractResult } from "@/lib/extraction-types"
 import type { MeetingNotesResult } from "@/lib/meeting-types"
@@ -118,5 +119,30 @@ export async function sendChatMessage(question: string): Promise<ChatApiResponse
     throw new ApiError(response.status, detail ?? "Failed to generate an answer. Please try again.")
   }
 
+  return response.json()
+}
+
+export async function fetchAgentRuns(module?: string): Promise<AgentRunSummary[]> {
+  if (!API_URL) {
+    throw new ApiError(0, "NEXT_PUBLIC_API_URL is not configured.")
+  }
+
+  const url = module ? `${API_URL}/admin/runs?module=${encodeURIComponent(module)}` : `${API_URL}/admin/runs`
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new ApiError(response.status, "Failed to load agent runs.")
+  }
+  return response.json()
+}
+
+export async function fetchAgentRun(id: string): Promise<AgentRunDetail> {
+  if (!API_URL) {
+    throw new ApiError(0, "NEXT_PUBLIC_API_URL is not configured.")
+  }
+
+  const response = await fetch(`${API_URL}/admin/runs/${id}`)
+  if (!response.ok) {
+    throw new ApiError(response.status, response.status === 404 ? "Agent run not found." : "Failed to load agent run.")
+  }
   return response.json()
 }

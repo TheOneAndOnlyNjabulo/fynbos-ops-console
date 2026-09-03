@@ -27,3 +27,40 @@ export function validationLabel(verdict: string) {
       return "Flagged for review"
   }
 }
+
+/** Meeting Notes stores a free-text "N/M action items grounded" verdict rather than
+ * a fixed enum - parse it to decide green (nothing dropped) vs amber (some dropped). */
+export function meetingVerdictBadgeClass(verdict: string) {
+  const match = verdict.match(/^(\d+)\/(\d+)/)
+  if (!match) return "bg-secondary text-secondary-foreground"
+  const [, grounded, total] = match
+  return grounded === total ? "bg-emerald-600 text-white" : "bg-amber-500 text-white"
+}
+
+/** Dispatches to the right badge-color function per module, since each module's
+ * verdict field means something different (approve/reject, a 4-state routing
+ * decision, or a free-text fraction) - see meeting_agent.py's module docstring
+ * for why these three shapes exist rather than one shared verdict type. */
+export function moduleVerdictBadgeClass(module: string, verdict: string) {
+  switch (module) {
+    case "support":
+      return verdictBadgeClass(verdict)
+    case "extraction":
+      return validationBadgeClass(verdict)
+    case "meeting":
+      return meetingVerdictBadgeClass(verdict)
+    default:
+      return "bg-secondary text-secondary-foreground"
+  }
+}
+
+export function moduleVerdictLabel(module: string, verdict: string) {
+  switch (module) {
+    case "support":
+      return verdict === "approved" ? "Approved" : "Rejected"
+    case "extraction":
+      return validationLabel(verdict)
+    default:
+      return verdict
+  }
+}

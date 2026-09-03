@@ -56,6 +56,35 @@ def log_agent_run(
             return str(cur.fetchone()[0])
 
 
-# list_agent_runs() / get_agent_run() land in step 12 alongside the admin
-# endpoints that are their only caller - no point adding read paths before
-# anything uses them.
+def list_agent_runs(module: str | None = None, limit: int = 50) -> list[dict]:
+    query = "select id, module, input, verdict, created_at from agent_runs"
+    params: list[Any] = []
+    if module:
+        query += " where module = %s"
+        params.append(module)
+    query += " order by created_at desc limit %s"
+    params.append(limit)
+
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(query, params)
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def get_agent_run(run_id: str) -> dict | None:
+    with _connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select id, module, input, draft, verdict, critique, final, citations, created_at
+                from agent_runs
+                where id = %s
+                """,
+                (run_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                return None
+            columns = [desc[0] for desc in cur.description]
+            return dict(zip(columns, row))
