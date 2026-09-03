@@ -3,16 +3,17 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Inbox, Leaf, MessageCircleQuestion } from "lucide-react"
+import { FileText, Inbox, Leaf, MessageCircleQuestion } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 
-// More modules land here as they're built (Document Extraction, Meeting Notes) -
-// deliberately only listing routes that actually exist yet, same "don't build
-// ahead of what's needed" discipline as the rest of this project.
+// Meeting Notes lands here once step 11 builds it - deliberately only listing
+// routes that actually exist yet, same "don't build ahead of what's needed"
+// discipline as the rest of this project.
 const NAV_ITEMS = [
   { href: "/", label: "Support Inbox", shortLabel: "Inbox", icon: Inbox },
+  { href: "/extract", label: "Document Extraction", shortLabel: "Extract", icon: FileText },
   { href: "/chat", label: "Ask a Question", shortLabel: "Chat", icon: MessageCircleQuestion },
 ]
 

@@ -6,3 +6,5 @@ pinecone==9.1.0
 langchain-core==1.6.1
 langchain-google-genai==4.4.0
 psycopg[binary]==3.3.5
+python-multipart==0.0.20
+pillow==11.1.0

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -10,8 +10,12 @@ from pydantic import BaseModel
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from app.db import log_agent_run  # noqa: E402
+from app.extraction_agent import run_extraction  # noqa: E402
 from app.rag_chain import answer_question  # noqa: E402
 from app.support_agent import run_support  # noqa: E402
+
+ALLOWED_UPLOAD_TYPES = {"image/png", "image/jpeg", "image/webp"}
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10MB - generous for a single-page invoice scan
 
 app = FastAPI(title="Fynbos Ops Console API")
 
@@ -135,4 +139,103 @@ def chat(body: ChatRequest) -> ChatResponse:
     return ChatResponse(
         answer=result.answer,
         sources=[SourceResponse(document=s.document, section=s.section) for s in result.sources],
+    )
+
+
+class LineItemResponse(BaseModel):
+    description: str
+    quantity: float
+    unit_price: float
+    line_total: float
+
+
+class ExtractionResponse(BaseModel):
+    vendor_name: str
+    invoice_number: str
+    invoice_date: str
+    po_number: str
+    line_items: list[LineItemResponse]
+    subtotal: float
+    vat_amount: float
+    grand_total: float
+
+
+class ArithmeticResponse(BaseModel):
+    has_discrepancy: bool
+    description: str
+
+
+class ValidationResponse(BaseModel):
+    verdict: str
+    citation: str
+    issues: list[str]
+
+
+class ExtractResponse(BaseModel):
+    extraction: ExtractionResponse
+    arithmetic: ArithmeticResponse
+    validation: ValidationResponse
+    citations: list[str]
+
+
+@app.post("/extract")
+async def extract(file: UploadFile = File(...)) -> ExtractResponse:
+    if file.content_type not in ALLOWED_UPLOAD_TYPES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Unsupported file type '{file.content_type}'. Upload a PNG, JPEG, or WEBP image.",
+        )
+
+    image_bytes = await file.read()
+    if len(image_bytes) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=422, detail="File is too large (max 10MB).")
+    if not image_bytes:
+        raise HTTPException(status_code=422, detail="Uploaded file is empty.")
+
+    try:
+        run = run_extraction(image_bytes, mime_type=file.content_type)
+    except Exception:
+        log_agent_run(
+            module="extraction",
+            input_payload={"filename": file.filename},
+            draft=None,
+            verdict=None,
+            critique=None,
+            final=None,
+            citations=[],
+        )
+        raise HTTPException(status_code=502, detail="Failed to process this invoice. Please try again.")
+
+    extraction_payload = {
+        "vendor_name": run.extraction.vendor_name,
+        "invoice_number": run.extraction.invoice_number,
+        "invoice_date": run.extraction.invoice_date,
+        "po_number": run.extraction.po_number,
+        "line_items": [li.model_dump() for li in run.extraction.line_items],
+        "subtotal": run.extraction.subtotal,
+        "vat_amount": run.extraction.vat_amount,
+        "grand_total": run.extraction.grand_total,
+    }
+    log_agent_run(
+        module="extraction",
+        input_payload={"filename": file.filename},
+        draft=extraction_payload,
+        verdict=run.validation.verdict,
+        critique="; ".join(run.validation.issues) if run.validation.issues else None,
+        final=extraction_payload,
+        citations=run.citations,
+    )
+
+    return ExtractResponse(
+        extraction=ExtractionResponse(**extraction_payload),
+        arithmetic=ArithmeticResponse(
+            has_discrepancy=run.arithmetic.has_discrepancy,
+            description=run.arithmetic.describe(),
+        ),
+        validation=ValidationResponse(
+            verdict=run.validation.verdict,
+            citation=run.validation.citation,
+            issues=run.validation.issues,
+        ),
+        citations=run.citations,
     )
