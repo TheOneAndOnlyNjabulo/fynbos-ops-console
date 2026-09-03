@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowLeft, Loader2 } from "lucide-react"
 
 import { AppShell } from "@/components/app-shell"
+import { Card, CardContent, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ApiError, fetchAgentRun } from "@/lib/api"
 import { MODULE_LABELS } from "@/lib/admin-utils"
@@ -209,9 +210,9 @@ function ChatBody({ run }: { run: AgentRunDetail }) {
 
 function StageCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</h2>
-      {children}
-    </div>
+    <Card className="gap-2 p-4">
+      <CardTitle>{title}</CardTitle>
+      <CardContent className="gap-2 p-0">{children}</CardContent>
+    </Card>
   )
 }

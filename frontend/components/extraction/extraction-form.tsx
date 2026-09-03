@@ -1,8 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { AlertTriangle, FileText, Loader2, Upload } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Calculator, FileText, Loader2, Upload } from "lucide-react"
 
+import { PageHeader } from "@/components/page-header"
+import { Timeline, TimelineStep } from "@/components/stage-timeline"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ApiError, submitInvoice } from "@/lib/api"
@@ -46,16 +48,18 @@ export function ExtractionForm() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto md:flex-row md:overflow-hidden">
-      {/* Section 1: invoice upload */}
-      <div className="shrink-0 border-b border-border/70 p-6 md:w-[26rem] md:overflow-y-auto md:border-r md:border-b-0">
-        <h1 className="text-2xl font-bold tracking-tight">Document Extraction</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Upload a supplier invoice (PNG, JPEG, or WEBP). It&apos;s extracted automatically, then independently
-          checked for arithmetic and routed to the right approval level per policy.
-        </p>
+    <div className="flex h-full flex-col overflow-hidden">
+      <PageHeader
+        icon={FileText}
+        eyebrow="Extract + Validation Agent"
+        title="Document Extraction"
+        description="Upload a supplier invoice (PNG, JPEG, or WEBP). It's extracted automatically, then independently checked for arithmetic and routed to the right approval level per policy."
+      />
 
-        <div className="mt-6 flex flex-col gap-3">
+      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      {/* Section 1: invoice upload */}
+      <div className="shrink-0 border-b border-border/70 p-6 md:w-[24rem] md:overflow-y-auto md:border-r md:border-b-0">
+        <div className="flex flex-col gap-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -114,8 +118,9 @@ export function ExtractionForm() {
         )}
 
         {result && (
-          <div className="mx-auto flex max-w-2xl flex-col gap-4">
-            <StageCard title="1. Extraction Agent">
+          <div className="mx-auto max-w-2xl">
+            <Timeline>
+            <TimelineStep index={1} title="Extraction Agent">
               <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
                 <dt className="text-muted-foreground">Vendor</dt>
                 <dd>{result.extraction.vendor_name}</dd>
@@ -164,18 +169,29 @@ export function ExtractionForm() {
                   <span>R{result.extraction.grand_total.toFixed(2)}</span>
                 </div>
               </div>
-            </StageCard>
+            </TimelineStep>
 
-            <StageCard title="2. Arithmetic check (deterministic)">
+            <TimelineStep
+              index={2}
+              icon={result.arithmetic.has_discrepancy ? AlertTriangle : Calculator}
+              tone={result.arithmetic.has_discrepancy ? "negative" : "default"}
+              title="Arithmetic check (deterministic)"
+            >
               <div className="flex items-center gap-2 text-sm">
                 {result.arithmetic.has_discrepancy && (
                   <AlertTriangle className="size-4 shrink-0 text-destructive" aria-hidden="true" />
                 )}
                 <span>{result.arithmetic.description}</span>
               </div>
-            </StageCard>
+            </TimelineStep>
 
-            <StageCard title="3. Validation Agent — routing decision">
+            <TimelineStep
+              index={3}
+              icon={result.validation.verdict === "auto_approved" ? CheckCircle2 : undefined}
+              tone={result.validation.verdict === "auto_approved" ? "positive" : "default"}
+              title="Validation Agent — routing decision"
+              last
+            >
               <div className="flex flex-wrap items-center gap-2">
                 <Badge className={validationBadgeClass(result.validation.verdict)}>
                   {validationLabel(result.validation.verdict)}
@@ -203,19 +219,12 @@ export function ExtractionForm() {
                   ))}
                 </div>
               )}
-            </StageCard>
+            </TimelineStep>
+            </Timeline>
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-function StageCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</h2>
-      {children}
+      </div>
     </div>
   )
 }

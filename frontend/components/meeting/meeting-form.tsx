@@ -3,6 +3,8 @@
 import * as React from "react"
 import { CheckCircle2, ClipboardList, Loader2, Send, XCircle } from "lucide-react"
 
+import { PageHeader } from "@/components/page-header"
+import { Timeline, TimelineStep } from "@/components/stage-timeline"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -35,16 +37,18 @@ export function MeetingForm() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto md:flex-row md:overflow-hidden">
-      {/* Section 1: transcript intake */}
-      <div className="shrink-0 border-b border-border/70 p-6 md:w-[26rem] md:overflow-y-auto md:border-r md:border-b-0">
-        <h1 className="text-2xl font-bold tracking-tight">Meeting Notes</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Paste a meeting transcript. Action items are extracted automatically, then each one is independently
-          verified against the transcript before it&apos;s kept.
-        </p>
+    <div className="flex h-full flex-col overflow-hidden">
+      <PageHeader
+        icon={ClipboardList}
+        eyebrow="Extract + Grounding Checker"
+        title="Meeting Notes"
+        description="Paste a meeting transcript. Action items are extracted automatically, then each one is independently verified against the transcript before it's kept."
+      />
 
-        <div className="mt-6 flex flex-col gap-3">
+      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      {/* Section 1: transcript intake */}
+      <div className="shrink-0 border-b border-border/70 p-6 md:w-[24rem] md:overflow-y-auto md:border-r md:border-b-0">
+        <div className="flex flex-col gap-3">
           <Textarea
             value={transcript}
             onChange={(event) => setTranscript(event.target.value)}
@@ -86,13 +90,18 @@ export function MeetingForm() {
         )}
 
         {result && (
-          <div className="mx-auto flex max-w-2xl flex-col gap-4">
-            <StageCard title="1. Extraction Agent — summary">
+          <div className="mx-auto max-w-2xl">
+            <Timeline>
+            <TimelineStep index={1} title="Extraction Agent — summary">
               <p className="text-sm leading-relaxed">{result.summary}</p>
-            </StageCard>
+            </TimelineStep>
 
-            <StageCard
-              title={`2. Grounding Checker — ${result.final_action_items.length}/${result.all_action_items.length} action items verified`}
+            <TimelineStep
+              index={2}
+              icon={result.final_action_items.length === result.all_action_items.length ? CheckCircle2 : XCircle}
+              tone={result.final_action_items.length === result.all_action_items.length ? "positive" : "negative"}
+              title={`Grounding Checker — ${result.final_action_items.length}/${result.all_action_items.length} action items verified`}
+              last={result.citations.length === 0}
             >
               {result.all_action_items.length === 0 && (
                 <p className="text-sm text-muted-foreground">No action items were identified in this transcript.</p>
@@ -134,32 +143,27 @@ export function MeetingForm() {
                   )
                 })}
               </div>
-            </StageCard>
+            </TimelineStep>
 
             {result.citations.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {result.citations.map((citation) => (
-                  <span
-                    key={citation}
-                    className="rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
-                  >
-                    {citation}
-                  </span>
-                ))}
-              </div>
+              <TimelineStep index={3} title="Standard consulted" last>
+                <div className="flex flex-wrap gap-1.5">
+                  {result.citations.map((citation) => (
+                    <span
+                      key={citation}
+                      className="rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
+                    >
+                      {citation}
+                    </span>
+                  ))}
+                </div>
+              </TimelineStep>
             )}
+            </Timeline>
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-function StageCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</h2>
-      {children}
+      </div>
     </div>
   )
 }

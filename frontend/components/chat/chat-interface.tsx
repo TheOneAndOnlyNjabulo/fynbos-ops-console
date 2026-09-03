@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Send } from "lucide-react"
+import { MessageCircleQuestion, Send } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 
 import { Button } from "@/components/ui/button"
@@ -66,7 +66,20 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex items-center gap-3 border-b border-border/70 px-6 py-4">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+          <MessageCircleQuestion className="size-4.5" strokeWidth={1.75} aria-hidden="true" />
+        </div>
+        <div>
+          <div className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+            Retrieval-augmented
+          </div>
+          <h1 className="text-base font-bold tracking-tight">Ask a Question</h1>
+        </div>
+      </div>
+
+      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col overflow-hidden">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-5">
         <div className="flex flex-col gap-4">
           {messages.map((message) => (
@@ -90,6 +103,7 @@ export function ChatInterface() {
             <Send className="size-4" />
           </Button>
         </div>
+      </div>
       </div>
     </div>
   )

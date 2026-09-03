@@ -1,8 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Inbox, Loader2, Send } from "lucide-react"
+import { CheckCircle2, FileEdit, Inbox, Loader2, Send, XCircle } from "lucide-react"
 
+import { PageHeader } from "@/components/page-header"
+import { Timeline, TimelineStep } from "@/components/stage-timeline"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -38,16 +40,18 @@ export function SupportForm() {
   const wasRevised = result !== null && result.checker.verdict === "rejected"
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto md:flex-row md:overflow-hidden">
-      {/* Section 1: email intake */}
-      <div className="shrink-0 border-b border-border/70 p-6 md:w-[26rem] md:overflow-y-auto md:border-r md:border-b-0">
-        <h1 className="text-2xl font-bold tracking-tight">Support Inbox</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Paste a customer email. It&apos;s drafted automatically, then independently checked against Fynbos&apos;s
-          policy documents before the reply is finalized.
-        </p>
+    <div className="flex h-full flex-col overflow-hidden">
+      <PageHeader
+        icon={Inbox}
+        eyebrow="Draft + Policy Checker"
+        title="Support Inbox"
+        description="Paste a customer email. It's drafted automatically, then independently checked against Fynbos's policy documents before the reply is finalized."
+      />
 
-        <div className="mt-6 flex flex-col gap-3">
+      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      {/* Section 1: email intake */}
+      <div className="shrink-0 border-b border-border/70 p-6 md:w-[24rem] md:overflow-y-auto md:border-r md:border-b-0">
+        <div className="flex flex-col gap-3">
           <Textarea
             value={emailText}
             onChange={(event) => setEmailText(event.target.value)}
@@ -89,58 +93,62 @@ export function SupportForm() {
         )}
 
         {result && (
-          <div className="mx-auto flex max-w-2xl flex-col gap-4">
-            <StageCard title="1. Draft Agent — first pass">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{result.draft.category}</Badge>
-              </div>
-              <p className="text-sm leading-relaxed">{result.draft.draft_reply}</p>
-            </StageCard>
-
-            <StageCard title="2. Policy Checker — independent check">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className={verdictBadgeClass(result.checker.verdict)}>
-                  {result.checker.verdict === "approved" ? "Approved" : "Rejected"}
-                </Badge>
-                <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
-                  {result.checker.citation}
-                </span>
-              </div>
-              {result.checker.verdict === "rejected" && (
-                <p className="text-sm leading-relaxed text-foreground">{result.checker.critique}</p>
-              )}
-            </StageCard>
-
-            <StageCard title={wasRevised ? "3. Final reply — corrected" : "3. Final reply"}>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{result.final.category}</Badge>
-              </div>
-              <p className="text-sm leading-relaxed">{result.final.draft_reply}</p>
-              {result.citations.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {result.citations.map((citation) => (
-                    <span
-                      key={citation}
-                      className="rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
-                    >
-                      {citation}
-                    </span>
-                  ))}
+          <div className="mx-auto max-w-2xl">
+            <Timeline>
+              <TimelineStep index={1} title="Draft Agent — first pass">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{result.draft.category}</Badge>
                 </div>
-              )}
-            </StageCard>
+                <p className="text-sm leading-relaxed">{result.draft.draft_reply}</p>
+              </TimelineStep>
+
+              <TimelineStep
+                index={2}
+                icon={result.checker.verdict === "approved" ? CheckCircle2 : XCircle}
+                tone={result.checker.verdict === "approved" ? "positive" : "negative"}
+                title="Policy Checker — independent check"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge className={verdictBadgeClass(result.checker.verdict)}>
+                    {result.checker.verdict === "approved" ? "Approved" : "Rejected"}
+                  </Badge>
+                  <span className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                    {result.checker.citation}
+                  </span>
+                </div>
+                {result.checker.verdict === "rejected" && (
+                  <p className="text-sm leading-relaxed text-foreground">{result.checker.critique}</p>
+                )}
+              </TimelineStep>
+
+              <TimelineStep
+                index={3}
+                icon={wasRevised ? FileEdit : undefined}
+                title={wasRevised ? "Final reply — corrected" : "Final reply"}
+                last
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{result.final.category}</Badge>
+                </div>
+                <p className="text-sm leading-relaxed">{result.final.draft_reply}</p>
+                {result.citations.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {result.citations.map((citation) => (
+                      <span
+                        key={citation}
+                        className="rounded-full border border-border bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
+                      >
+                        {citation}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </TimelineStep>
+            </Timeline>
           </div>
         )}
       </div>
-    </div>
-  )
-}
-
-function StageCard({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4">
-      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">{title}</h2>
-      {children}
+      </div>
     </div>
   )
 }

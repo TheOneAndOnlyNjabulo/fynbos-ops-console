@@ -3,34 +3,50 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ClipboardList, FileText, Inbox, Leaf, MessageCircleQuestion } from "lucide-react"
+import {
+  ClipboardList,
+  FileText,
+  Inbox,
+  LayoutDashboard,
+  Leaf,
+  MessageCircleQuestion,
+} from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
-  { href: "/", label: "Support Inbox", shortLabel: "Inbox", icon: Inbox },
-  { href: "/extract", label: "Document Extraction", shortLabel: "Extract", icon: FileText },
-  { href: "/meeting-notes", label: "Meeting Notes", shortLabel: "Meetings", icon: ClipboardList },
-  { href: "/chat", label: "Ask a Question", shortLabel: "Chat", icon: MessageCircleQuestion },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/support", label: "Support Inbox", icon: Inbox },
+  { href: "/extract", label: "Document Extraction", icon: FileText },
+  { href: "/meeting-notes", label: "Meeting Notes", icon: ClipboardList },
+  { href: "/chat", label: "Ask a Question", icon: MessageCircleQuestion },
 ]
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-svh flex-col md:flex-row">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
-        <div className="flex items-center gap-2 px-5 py-6">
-          <Leaf className="size-6 text-primary" strokeWidth={1.75} aria-hidden="true" />
-          <div>
-            <div className="text-sm font-bold tracking-tight">Fynbos Retail</div>
-            <div className="text-[11px] text-muted-foreground">Ops Console</div>
+    <div className="flex h-svh flex-col">
+      {/* Top bar - single unified header across every breakpoint, no sidebar / no bottom tabs */}
+      <header className="shrink-0 border-b border-border/70 bg-background/95 backdrop-blur">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Leaf className="size-4.5" strokeWidth={1.75} aria-hidden="true" />
+            </span>
+            <div className="leading-tight">
+              <div className="text-sm font-bold tracking-tight">Fynbos Retail</div>
+              <div className="text-[10px] text-muted-foreground">Ops Console</div>
+            </div>
+          </Link>
+          <div className="flex items-center gap-2">
+            <span className="hidden text-[11px] text-muted-foreground sm:inline">Internal tool</span>
+            <ThemeToggle />
           </div>
         </div>
 
-        <nav className="flex flex-col gap-0.5 px-3">
+        <nav className="flex gap-1 overflow-x-auto border-t border-border/50 px-3 py-1.5 sm:px-5">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href
             const Icon = item.icon
@@ -39,10 +55,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+                  "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                   active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <Icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
@@ -51,48 +67,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             )
           })}
         </nav>
-
-        <div className="mt-auto flex items-center justify-between border-t border-sidebar-border px-5 py-4">
-          <span className="text-[11px] text-muted-foreground">Internal tool</span>
-          <ThemeToggle />
-        </div>
-      </aside>
-
-      {/* Mobile top bar */}
-      <header className="flex items-center justify-between border-b border-border/70 px-4 py-3 md:hidden">
-        <div className="flex items-center gap-2">
-          <Leaf className="size-5 text-primary" strokeWidth={1.75} aria-hidden="true" />
-          <span className="text-sm font-bold tracking-tight">Fynbos Retail</span>
-        </div>
-        <ThemeToggle />
       </header>
 
       {/* Main content - a bounded viewport; each page owns its own scroll region within it */}
-      <main className="flex flex-1 flex-col overflow-hidden pb-16 md:pb-0">{children}</main>
-
-      {/* Mobile bottom tab bar */}
-      <nav
-        className="fixed inset-x-0 bottom-0 z-10 flex border-t border-border/70 bg-background/95 backdrop-blur md:hidden"
-        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-      >
-        {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href
-          const Icon = item.icon
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[11px] transition-colors",
-                active ? "text-primary" : "text-muted-foreground"
-              )}
-            >
-              <Icon className="size-5" strokeWidth={active ? 2.25 : 1.75} aria-hidden="true" />
-              {item.shortLabel}
-            </Link>
-          )
-        })}
-      </nav>
+      <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
     </div>
   )
 }

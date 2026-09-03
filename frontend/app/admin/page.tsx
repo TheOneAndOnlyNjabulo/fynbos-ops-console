@@ -2,9 +2,10 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { Loader2 } from "lucide-react"
+import { Loader2, ScrollText } from "lucide-react"
 
 import { AppShell } from "@/components/app-shell"
+import { PageHeader } from "@/components/page-header"
 import { Badge } from "@/components/ui/badge"
 import { ApiError, fetchAgentRuns } from "@/lib/api"
 import { MODULE_LABELS, runSummaryText } from "@/lib/admin-utils"
@@ -34,15 +35,14 @@ export default function AdminPage() {
   return (
     <AppShell>
       <div className="h-full overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 py-8">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Agent runs</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Every automation run across all four modules, with the first-pass draft and the checker&apos;s
-              verdict.
-            </p>
-          </div>
+        <PageHeader
+          icon={ScrollText}
+          eyebrow="Unified activity feed"
+          title="Agent runs"
+          description="Every automation run across all four modules, with the first-pass draft and the checker's verdict."
+        />
 
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-6 py-8">
           <div className="flex flex-wrap gap-1.5">
             {FILTERS.map((f) => (
               <button
