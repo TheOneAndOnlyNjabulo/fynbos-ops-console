@@ -9,6 +9,7 @@ from pydantic import BaseModel
 # and this file won't exist - load_dotenv() silently no-ops rather than erroring.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
+from app.rag_chain import answer_question  # noqa: E402
 from app.support_agent import run_support  # noqa: E402
 
 app = FastAPI(title="Fynbos Ops Console API")
@@ -64,4 +65,34 @@ def support(body: SupportRequest) -> SupportResponse:
         checker=CheckerVerdictResponse(**run.checker.__dict__),
         final=SupportDraftResponse(**run.final.__dict__),
         citations=run.citations,
+    )
+
+
+class ChatRequest(BaseModel):
+    question: str
+
+
+class SourceResponse(BaseModel):
+    document: str
+    section: str
+
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: list[SourceResponse]
+
+
+@app.post("/chat")
+def chat(body: ChatRequest) -> ChatResponse:
+    if not body.question.strip():
+        raise HTTPException(status_code=422, detail="question must not be empty")
+
+    try:
+        result = answer_question(body.question)
+    except Exception:
+        raise HTTPException(status_code=502, detail="Failed to generate an answer. Please try again.")
+
+    return ChatResponse(
+        answer=result.answer,
+        sources=[SourceResponse(document=s.document, section=s.section) for s in result.sources],
     )
