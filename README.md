@@ -14,12 +14,11 @@ different answer to "what does it mean to check this."
 
 ## Why this exists
 
-This is a third portfolio piece, deliberately different in shape from the two before it: [Baobab Freight
-Assistant](https://github.com/TheOneAndOnlyNjabulo/baobab-freight) is a single-agent RAG chatbot, [Marula Ticket
-Triage Assistant](https://github.com/TheOneAndOnlyNjabulo/marula-property-group) is one classify-and-audit agent
-pair applied to one use case. This project asks a different question: what does "agent checks agent" look like
-across several genuinely different automation tasks in one company, rather than one task done well once. The
-answer turned out to be that it looks different each time — documented below rather than glossed over.
+Most systems that pair a drafting agent with a checking agent apply one classify-and-audit pattern to a single
+task. This project asks what that pattern looks like applied to several genuinely different automation tasks
+inside one company — support replies, invoice extraction, and meeting notes — rather than one task done well
+once. The answer differs each time: a checker that corrects, a checker that only routes, and a checker that
+filters, each argued for below.
 
 ## Architecture
 
@@ -104,9 +103,9 @@ retrieved chunk be cited and returned directly.
 - **A revision that fixes one error can introduce another, and the original design had no way to catch that.**
   During Support Inbox testing, a rejected draft's revision correctly fixed a wrong shipping-cost claim - and, in
   the same revision, changed a previously-correct refund timeline to an incorrect one. The single-revision,
-  never-re-checked design (the same pattern the two earlier portfolio projects both use) had no mechanism to
-  catch a regression introduced by its own fix. Fixed by having the Checker re-verify every revision, bounded to
-  2 extra attempts. Confirmed with a repeated test: the same email rejected on 4 separate runs, for three
+  never-re-checked design had no mechanism to catch a regression introduced by its own fix. Fixed by having the
+  Checker re-verify every revision, bounded to 2 extra attempts. Confirmed with a repeated test: the same email
+  rejected on 4 separate runs, for three
   different reasons each time, and all 4 resolved to consistent, correct final answers. The eval set later showed
   this isn't a rare case - 6 of 8 Support cases were rejected on their first pass, every one corrected.
 - **Not every "agent checks agent" pattern should default to auto-correct.** Support's checker corrects because a
@@ -235,8 +234,6 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ```bash
 npm run dev
 ```
-
-This project runs locally; it is not currently deployed.
 
 ## API
 
