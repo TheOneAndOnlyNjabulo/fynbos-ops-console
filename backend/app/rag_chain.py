@@ -1,16 +1,14 @@
 """
 Knowledge Assistant chain: retrieval -> citation-aware prompt template -> Gemini
-generation. Bundles two guardrails from the start (both learned the hard way on
-Marula, not discovered here from scratch):
+generation. Bundles two guardrails from the start:
 
 1. A calibrated similarity threshold that skips the LLM entirely when nothing
    retrieved is relevant enough - cheap, and an independent backstop against
    generating from irrelevant context.
 2. An explicit system-prompt rule that a bare topic/keyword query ("returns
    policy", "price match") is a valid request to summarize, not a reason to
-   refuse - Marula's chatbot shipped without this and had to be patched after
-   real bare-keyword queries were incorrectly rejected in production, even
-   though they scored well above the threshold and were reaching the model.
+   refuse - without this, bare-keyword queries can be incorrectly rejected
+   even though they score well above the threshold and are reaching the model.
 """
 
 import os
@@ -24,11 +22,11 @@ from app.retrieval import RetrievedChunk, retrieve
 
 GENERATION_MODEL = "gemini-3.5-flash-lite"
 
-# Calibrated against this corpus specifically - do not assume a threshold from
-# Baobab (0.62) or Marula (0.65) transfers; different documents produce different
-# score distributions. Here: out-of-domain questions topped out at 0.624,
-# in-domain questions (including short keyword-style ones) scored 0.717+. 0.67
-# sits in that gap.
+# Calibrated against this corpus specifically - do not assume a threshold from a
+# different corpus transfers; different documents produce different score
+# distributions. Here: out-of-domain questions topped out at 0.624, in-domain
+# questions (including short keyword-style ones) scored 0.717+. 0.67 sits in
+# that gap.
 CONFIDENCE_THRESHOLD = 0.67
 
 NOT_FOUND_ANSWER = (

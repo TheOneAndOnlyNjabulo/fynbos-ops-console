@@ -191,10 +191,10 @@ def _dedupe_citations(chunks: list[RetrievedChunk]) -> list[str]:
 # Bounds how many revise-and-recheck cycles run after the first rejection. Observed
 # during testing: a revision that correctly fixed one flagged error (a wrong shipping-
 # cost claim) introduced a NEW, previously-correct claim being wrong (the refund
-# timeline flipped from the right figure to a wrong one) - because the original
-# design (one revision, never re-checked, same as Marula's) had no way to catch a
-# regression introduced by the fix itself. Re-checking the revision closes that gap;
-# capping it at 2 extra attempts bounds the cost of a persistently-wrong draft.
+# timeline flipped from the right figure to a wrong one) - because a single-revision,
+# never-re-checked design has no way to catch a regression introduced by the fix
+# itself. Re-checking the revision closes that gap; capping it at 2 extra attempts
+# bounds the cost of a persistently-wrong draft.
 MAX_REVISION_ATTEMPTS = 2
 
 

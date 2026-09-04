@@ -3,10 +3,10 @@ Manual test script for the Knowledge Assistant chain - run via CLI:
     cd backend
     .venv/Scripts/python.exe scripts/test_rag_chain.py
 
-Includes full-sentence questions, bare-keyword queries (the exact shape that
-broke Marula's chatbot in production - included here from the start rather
-than found later), and a deliberately out-of-scope question, to confirm both
-guardrails behave correctly before this is wired into the Chat UI.
+Includes full-sentence questions, bare-keyword queries (a shape that can slip
+past a similarity-threshold guardrail if the prompt doesn't explicitly account
+for it), and a deliberately out-of-scope question, to confirm both guardrails
+behave correctly before this is wired into the Chat UI.
 """
 
 import sys
