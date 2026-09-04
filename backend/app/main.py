@@ -24,6 +24,7 @@ app = FastAPI(title="Fynbos Ops Console API")
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["https://fynbos-ops.vercel.app"],
     allow_origin_regex=r"http://localhost:\d+",
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],

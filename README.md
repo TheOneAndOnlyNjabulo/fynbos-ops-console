@@ -6,6 +6,8 @@ and a policy chatbot. Each of the first three pairs a drafting agent with an ind
 accepting the output — but the three checkers work differently from each other, because each domain calls for a
 different answer to "what does it mean to check this."
 
+**Live demo:** https://fynbos-ops.vercel.app/
+
 > **Fynbos Retail is entirely fictional.** The company, its policies, and every document in [`docs/`](./docs)
 > were invented for this project. None of it describes a real business, and nothing in it is real retail,
 > financial, or legal advice.
@@ -24,7 +26,7 @@ filters, each argued for below.
 
 ```mermaid
 flowchart LR
-    subgraph Frontend["Next.js — 4 modules + Admin"]
+    subgraph Frontend["Next.js on Vercel — 4 modules + Admin"]
         SupportUI[Support Inbox]
         ExtractUI[Document Extraction]
         MeetingUI[Meeting Notes]
@@ -32,7 +34,7 @@ flowchart LR
         AdminUI[Admin]
     end
 
-    subgraph Backend["FastAPI"]
+    subgraph Backend["FastAPI on Railway"]
         Draft[Draft Agent] --> Checker[Policy Checker]
         Checker -- "reject: revise + re-check, bounded" --> Draft
         Extract[Extraction Agent] --> Validate[Validation Agent]
@@ -153,8 +155,8 @@ Extraction cases call Gemini's vision endpoint, so a full run takes several minu
 
 | Layer | Choice |
 |---|---|
-| Frontend | Next.js (TypeScript) + Tailwind + shadcn/ui |
-| Backend | Python + FastAPI |
+| Frontend | Next.js (TypeScript) + Tailwind + shadcn/ui, deployed on Vercel |
+| Backend | Python + FastAPI, deployed on Railway |
 | Orchestration | LangChain - structured-output agent chains, multimodal input for extraction |
 | Generation | Gemini (`gemini-3.5-flash-lite`), including vision input |
 | Embeddings | Gemini (`gemini-embedding-001`) |
@@ -265,6 +267,5 @@ No authentication or rate limiting on any endpoint - internal tool, not a public
 
 - Document Extraction accepts PNG/JPEG/WEBP only. PDF was in the original scope note but wasn't implemented or
   tested, and isn't claimed as working.
-- No deployment yet - the project runs locally.
 - No authentication on the Admin UI or any endpoint, appropriate for an internal-tool demo but not for a
   production deployment handling real customer or financial data.
