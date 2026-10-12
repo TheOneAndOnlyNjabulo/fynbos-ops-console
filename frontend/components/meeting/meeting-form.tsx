@@ -62,17 +62,18 @@ export function MeetingForm() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden">
       <PageHeader
+        accent="meeting"
         icon={ClipboardList}
         eyebrow="Extract + Grounding Checker"
         title="Meeting Notes"
         description="Paste a meeting transcript. Action items are extracted automatically, then each one is independently verified against the transcript before it's kept."
       />
 
-      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:px-6 sm:pb-6 md:flex-row md:overflow-hidden">
       {/* Section 1: transcript intake */}
-      <div className="shrink-0 border-b border-border/70 p-6 md:w-[24rem] md:overflow-y-auto md:border-r md:border-b-0">
+      <div className="shrink-0 rounded-3xl bg-card p-5 md:w-[24rem] md:overflow-y-auto">
         <div className="flex flex-col gap-3">
           <SamplePicker
             samples={[{ label: "Ops meeting transcript", value: SAMPLE_TRANSCRIPT }]}
@@ -84,6 +85,7 @@ export function MeetingForm() {
             onChange={(event) => setTranscript(event.target.value)}
             placeholder="e.g. Priya: Sipho, can you pull the Q3 numbers by Friday? Sipho: Sure..."
             rows={12}
+            className="min-h-72"
             disabled={isSubmitting}
             aria-label="Meeting transcript"
           />
@@ -109,15 +111,14 @@ export function MeetingForm() {
       </div>
 
       {/* Section 2: summary + per-item grounding results */}
-      <div className="flex-1 p-6 md:overflow-y-auto">
+      <div className="flex-1 rounded-3xl border border-border p-5 sm:p-6 md:overflow-y-auto">
         {!result && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-            <ClipboardList className="size-8" strokeWidth={1.5} aria-hidden="true" />
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+            <HowItWorks steps={HOW_IT_WORKS} accent="meeting" />
             <p className="max-w-xs text-sm">
               The summary and each action item&apos;s grounding verdict will appear here once you process a
               transcript.
             </p>
-            <HowItWorks steps={HOW_IT_WORKS} />
           </div>
         )}
 

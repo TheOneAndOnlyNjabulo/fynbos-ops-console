@@ -15,7 +15,6 @@ import {
 } from "lucide-react"
 
 import { AppShell } from "@/components/app-shell"
-import { PageHeader } from "@/components/page-header"
 import { ModuleCard } from "@/components/module-card"
 import { StatCard } from "@/components/stat-card"
 import { Badge } from "@/components/ui/badge"
@@ -27,6 +26,7 @@ import type { AgentRunSummary } from "@/lib/admin-types"
 const MODULES = [
   {
     href: "/support",
+    accent: "support" as const,
     icon: Inbox,
     tag: "Draft + Policy Checker",
     title: "Support Inbox",
@@ -34,6 +34,7 @@ const MODULES = [
   },
   {
     href: "/extract",
+    accent: "extract" as const,
     icon: FileText,
     tag: "Extract + Validation Agent",
     title: "Document Extraction",
@@ -41,6 +42,7 @@ const MODULES = [
   },
   {
     href: "/meeting-notes",
+    accent: "meeting" as const,
     icon: ClipboardList,
     tag: "Extract + Grounding Checker",
     title: "Meeting Notes",
@@ -48,6 +50,7 @@ const MODULES = [
   },
   {
     href: "/chat",
+    accent: "ask" as const,
     icon: MessageCircleQuestion,
     tag: "Retrieval-augmented",
     title: "Ask a Question",
@@ -80,15 +83,50 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="h-full overflow-y-auto">
-        <PageHeader
-          icon={LayoutDashboard}
-          eyebrow="Overview"
-          title="Ops Console"
-          description="Four agent workflows and one activity log for Fynbos Retail, a fictional South African online retailer."
-        />
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 pt-8 pb-10 sm:px-6">
+          {/* Hero: oversized type on the white canvas, no container */}
+          <section className="flex flex-wrap items-end justify-between gap-6">
+            <div className="max-w-2xl">
+              <span className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
+                Fictional South African online retailer
+              </span>
+              <h1 className="mt-4 text-4xl leading-[1.05] font-extrabold tracking-tight sm:text-6xl">
+                Four agent workflows.
+                <br />
+                <span className="text-muted-foreground">One ops console.</span>
+              </h1>
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-muted-foreground">
+                Each workflow pairs a drafting agent with an independent checker before anything is accepted,
+                and every run lands in one activity log.
+              </p>
+            </div>
+            <Link
+              href="/admin"
+              className="inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-85"
+            >
+              Activity log <ArrowRight className="size-4" />
+            </Link>
+          </section>
 
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-8">
-          <div className="grid gap-3 sm:grid-cols-3">
+          {/* Bento: the first workflow is featured, the rest fill around it */}
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
+            {MODULES.map((m, index) => (
+              <ModuleCard
+                key={m.href}
+                {...m}
+                featured={index === 0}
+                className={
+                  index === 0
+                    ? "sm:col-span-2 lg:row-span-2"
+                    : index === 1
+                      ? "lg:col-span-2"
+                      : undefined
+                }
+              />
+            ))}
+          </section>
+
+          <section className="grid gap-4 sm:grid-cols-3">
             <StatCard
               icon={ListChecks}
               label="Logged runs"
@@ -107,36 +145,21 @@ export default function DashboardPage() {
               value={runs ? String(activeModules) : "—"}
               hint="of 4"
             />
-          </div>
+          </section>
 
-          <div>
-            <h2 className="mb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Workflows
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {MODULES.map((m) => (
-                <ModuleCard key={m.href} {...m} />
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                Recent activity
-              </h2>
+          <section>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-extrabold tracking-tight">Recent activity</h2>
               <Link
                 href="/admin"
-                className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold hover:bg-muted"
               >
-                View all <ArrowRight className="size-3" />
+                View all <ArrowRight className="size-4" />
               </Link>
             </div>
 
             {error && (
-              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error}
-              </div>
+              <div className="rounded-3xl bg-destructive/10 px-5 py-4 text-sm text-destructive">{error}</div>
             )}
 
             {!runs && !error && (
@@ -146,18 +169,16 @@ export default function DashboardPage() {
             )}
 
             {runs && runs.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No agent runs yet. Try one of the workflows above.
-              </p>
+              <p className="text-sm text-muted-foreground">No agent runs yet. Try one of the workflows above.</p>
             )}
 
             {runs && runs.length > 0 && (
-              <div className="flex flex-col divide-y divide-border/70 rounded-xl border border-border bg-card">
+              <div className="flex flex-col gap-2">
                 {runs.slice(0, 6).map((run) => (
                   <Link
                     key={run.id}
                     href={`/admin/${run.id}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/50"
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-card px-5 py-3.5 transition-colors hover:bg-accent"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -168,18 +189,18 @@ export default function DashboardPage() {
                           </Badge>
                         )}
                       </div>
-                      <p className="mt-1 truncate text-sm text-foreground">
+                      <p className="mt-1.5 truncate text-sm font-medium text-foreground">
                         {runSummaryText(run.module, run.input)}
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
                       {new Date(run.created_at).toLocaleDateString()}
                     </span>
                   </Link>
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </div>
       </div>
     </AppShell>

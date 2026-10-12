@@ -78,17 +78,18 @@ export function ExtractionForm() {
   }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden">
       <PageHeader
+        accent="extract"
         icon={FileText}
         eyebrow="Extract + Validation Agent"
         title="Document Extraction"
         description="Upload a supplier invoice (PNG, JPEG, or WEBP). It's extracted automatically, then independently checked for arithmetic and routed to the right approval level per policy."
       />
 
-      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:px-6 sm:pb-6 md:flex-row md:overflow-hidden">
       {/* Section 1: invoice upload */}
-      <div className="shrink-0 border-b border-border/70 p-6 md:w-[24rem] md:overflow-y-auto md:border-r md:border-b-0">
+      <div className="shrink-0 rounded-3xl bg-card p-5 md:w-[24rem] md:overflow-y-auto">
         <div className="flex flex-col gap-3">
           <SamplePicker samples={SAMPLE_INVOICES} onPick={handlePickSample} disabled={isSubmitting} />
           <input
@@ -138,15 +139,14 @@ export function ExtractionForm() {
       </div>
 
       {/* Section 2: extraction + validation results */}
-      <div className="flex-1 p-6 md:overflow-y-auto">
+      <div className="flex-1 rounded-3xl border border-border p-5 sm:p-6 md:overflow-y-auto">
         {!result && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-            <FileText className="size-8" strokeWidth={1.5} aria-hidden="true" />
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+            <HowItWorks steps={HOW_IT_WORKS} accent="extract" />
             <p className="max-w-xs text-sm">
               The Extraction Agent&apos;s fields, the arithmetic check, and the Validation Agent&apos;s routing
               decision will appear here once you process an invoice.
             </p>
-            <HowItWorks steps={HOW_IT_WORKS} />
           </div>
         )}
 

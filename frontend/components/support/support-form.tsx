@@ -68,17 +68,18 @@ export function SupportForm() {
   const wasRevised = result !== null && result.checker.verdict === "rejected"
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="mx-auto flex h-full w-full max-w-7xl flex-col overflow-hidden">
       <PageHeader
+        accent="support"
         icon={Inbox}
         eyebrow="Draft + Policy Checker"
         title="Support Inbox"
         description="Paste a customer email. It's drafted automatically, then independently checked against Fynbos's policy documents before the reply is finalized."
       />
 
-      <div className="flex flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:px-6 sm:pb-6 md:flex-row md:overflow-hidden">
       {/* Section 1: email intake */}
-      <div className="shrink-0 border-b border-border/70 p-6 md:w-[24rem] md:overflow-y-auto md:border-r md:border-b-0">
+      <div className="shrink-0 rounded-3xl bg-card p-5 md:w-[24rem] md:overflow-y-auto">
         <div className="flex flex-col gap-3">
           <SamplePicker samples={SAMPLE_EMAILS} onPick={setEmailText} disabled={isSubmitting} />
           <Textarea
@@ -86,6 +87,7 @@ export function SupportForm() {
             onChange={(event) => setEmailText(event.target.value)}
             placeholder="e.g. My blender arrived with a cracked lid, can you help?"
             rows={6}
+            className="min-h-44"
             disabled={isSubmitting}
             aria-label="Customer email"
           />
@@ -111,15 +113,14 @@ export function SupportForm() {
       </div>
 
       {/* Section 2: live audit trail */}
-      <div className="flex-1 p-6 md:overflow-y-auto">
+      <div className="flex-1 rounded-3xl border border-border p-5 sm:p-6 md:overflow-y-auto">
         {!result && (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-            <Inbox className="size-8" strokeWidth={1.5} aria-hidden="true" />
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+            <HowItWorks steps={HOW_IT_WORKS} accent="support" />
             <p className="max-w-xs text-sm">
               The Draft Agent&apos;s reply, the Policy Checker&apos;s verdict, and the final result will appear
               here once you process an email.
             </p>
-            <HowItWorks steps={HOW_IT_WORKS} />
           </div>
         )}
 
