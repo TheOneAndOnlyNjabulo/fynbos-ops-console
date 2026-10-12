@@ -71,7 +71,7 @@ export function MeetingForm() {
         description="Paste a meeting transcript. Action items are extracted automatically, then each one is independently verified against the transcript before it's kept."
       />
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:px-6 sm:pb-6 md:flex-row md:overflow-hidden">
+      <div className="stagger flex flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 sm:px-6 sm:pb-6 md:flex-row md:overflow-hidden">
       {/* Section 1: transcript intake */}
       <div className="shrink-0 rounded-3xl bg-card p-5 md:w-[24rem] md:overflow-y-auto">
         <div className="flex flex-col gap-3">

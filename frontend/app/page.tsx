@@ -85,7 +85,7 @@ export default function DashboardPage() {
       <div className="h-full overflow-y-auto">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 pt-8 pb-10 sm:px-6">
           {/* Hero: oversized type on the white canvas, no container */}
-          <section className="flex flex-wrap items-end justify-between gap-6">
+          <section className="flex animate-rise flex-wrap items-end justify-between gap-6">
             <div className="max-w-2xl">
               <span className="inline-block rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
                 Fictional South African online retailer
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           </section>
 
           {/* Bento: the first workflow is featured, the rest fill around it */}
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
+          <section className="stagger grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:grid-rows-2">
             {MODULES.map((m, index) => (
               <ModuleCard
                 key={m.href}
@@ -126,7 +126,7 @@ export default function DashboardPage() {
             ))}
           </section>
 
-          <section className="grid gap-4 sm:grid-cols-3">
+          <section className="stagger grid gap-4 sm:grid-cols-3">
             <StatCard
               icon={ListChecks}
               label="Logged runs"
@@ -173,7 +173,7 @@ export default function DashboardPage() {
             )}
 
             {runs && runs.length > 0 && (
-              <div className="flex flex-col gap-2">
+              <div className="stagger flex flex-col gap-2">
                 {runs.slice(0, 6).map((run) => (
                   <Link
                     key={run.id}

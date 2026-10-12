@@ -33,7 +33,7 @@ export function ModuleCard({
     <Link
       href={href}
       className={cn(
-        "group relative flex flex-col justify-between gap-8 overflow-hidden rounded-3xl p-6 text-on-accent transition-transform duration-200 hover:-translate-y-0.5 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
+        "group relative flex flex-col justify-between gap-8 overflow-hidden rounded-3xl p-6 text-on-accent transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.98] focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none",
         ACCENT_BG[accent],
         featured && "min-h-72",
         className

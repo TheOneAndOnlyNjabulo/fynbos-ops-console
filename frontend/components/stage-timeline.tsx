@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
  * numbered node + connecting line chrome - callers render whatever's inside.
  */
 export function Timeline({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col">{children}</div>
+  return <div className="stagger flex flex-col">{children}</div>
 }
 
 export function TimelineStep({
