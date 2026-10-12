@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -15,6 +15,7 @@ from app.db import get_agent_run, list_agent_runs, log_agent_run  # noqa: E402
 from app.extraction_agent import run_extraction  # noqa: E402
 from app.meeting_agent import run_meeting_notes  # noqa: E402
 from app.rag_chain import answer_question  # noqa: E402
+from app.rate_limit import enforce_rate_limit  # noqa: E402
 from app.support_agent import run_support  # noqa: E402
 
 ALLOWED_UPLOAD_TYPES = {"image/png", "image/jpeg", "image/webp"}
@@ -59,7 +60,7 @@ class SupportResponse(BaseModel):
     citations: list[str]
 
 
-@app.post("/support")
+@app.post("/support", dependencies=[Depends(enforce_rate_limit)])
 def support(body: SupportRequest) -> SupportResponse:
     if not body.email_text.strip():
         raise HTTPException(status_code=422, detail="email_text must not be empty")
@@ -110,7 +111,7 @@ class ChatResponse(BaseModel):
     sources: list[SourceResponse]
 
 
-@app.post("/chat")
+@app.post("/chat", dependencies=[Depends(enforce_rate_limit)])
 def chat(body: ChatRequest) -> ChatResponse:
     if not body.question.strip():
         raise HTTPException(status_code=422, detail="question must not be empty")
@@ -182,7 +183,7 @@ class ExtractResponse(BaseModel):
     citations: list[str]
 
 
-@app.post("/extract")
+@app.post("/extract", dependencies=[Depends(enforce_rate_limit)])
 async def extract(file: UploadFile = File(...)) -> ExtractResponse:
     if file.content_type not in ALLOWED_UPLOAD_TYPES:
         raise HTTPException(
@@ -270,7 +271,7 @@ class MeetingNotesResponse(BaseModel):
     citations: list[str]
 
 
-@app.post("/meeting-notes")
+@app.post("/meeting-notes", dependencies=[Depends(enforce_rate_limit)])
 def meeting_notes(body: MeetingNotesRequest) -> MeetingNotesResponse:
     if not body.transcript.strip():
         raise HTTPException(status_code=422, detail="transcript must not be empty")

@@ -261,7 +261,10 @@ npm run dev
 
 `GET /admin/runs?module=...`, `GET /admin/runs/{id}` — unified activity feed and detail, filterable by module.
 
-No authentication or rate limiting on any endpoint - internal tool, not a public-facing surface.
+No authentication - internal tool, not a public-facing surface. The four `POST` endpoints share one rate limit:
+10 requests per IP per rolling 24 hours, since they all draw on the same Gemini quota. The IP is derived
+server-side (`X-Forwarded-For`), and attempts are counted in a small `rate_limit_hits` table in Neon (created on
+first use). Returns 429 once exhausted; the admin endpoints are not limited.
 
 ## Known limitations
 
