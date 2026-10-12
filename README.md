@@ -34,7 +34,7 @@ flowchart LR
         AdminUI[Admin]
     end
 
-    subgraph Backend["FastAPI on Railway"]
+    subgraph Backend["FastAPI on Render"]
         Draft[Draft Agent] --> Checker[Policy Checker]
         Checker -- "reject: revise + re-check, bounded" --> Draft
         Extract[Extraction Agent] --> Validate[Validation Agent]
@@ -156,7 +156,7 @@ Extraction cases call Gemini's vision endpoint, so a full run takes several minu
 | Layer | Choice |
 |---|---|
 | Frontend | Next.js (TypeScript) + Tailwind + shadcn/ui, deployed on Vercel |
-| Backend | Python + FastAPI, deployed on Railway |
+| Backend | Python + FastAPI, deployed on Render |
 | Orchestration | LangChain - structured-output agent chains, multimodal input for extraction |
 | Generation | Gemini (`gemini-3.5-flash-lite`), including vision input |
 | Embeddings | Gemini (`gemini-embedding-001`) |
