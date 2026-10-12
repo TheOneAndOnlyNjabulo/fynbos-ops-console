@@ -12,7 +12,9 @@ import {
   MessageCircleQuestion,
 } from "lucide-react"
 
+import { ServerStatusBanner } from "@/components/server-status"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useBackendStatus } from "@/hooks/use-backend-status"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -25,6 +27,10 @@ const NAV_ITEMS = [
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  // Mounted once here, not per page, so the backend starts waking on whichever
+  // page a visitor lands on - including the dashboard.
+  const backendStatus = useBackendStatus()
+  const showStatus = backendStatus === "waking" || backendStatus === "unreachable"
 
   return (
     <div className="flex h-svh flex-col">
@@ -70,7 +76,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content - a bounded viewport; each page owns its own scroll region within it */}
-      <main className="flex flex-1 flex-col overflow-hidden">{children}</main>
+      <main className="flex flex-1 flex-col overflow-hidden">
+        {showStatus && (
+          <div className="shrink-0 px-4 pt-4 sm:px-6">
+            <ServerStatusBanner status={backendStatus} />
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   )
 }

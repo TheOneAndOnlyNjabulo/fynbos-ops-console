@@ -3,7 +3,9 @@
 import * as React from "react"
 import { CheckCircle2, FileEdit, Inbox, Loader2, Send, XCircle } from "lucide-react"
 
+import { HowItWorks, SamplePicker } from "@/components/module-helpers"
 import { PageHeader } from "@/components/page-header"
+import { SlowRequestHint } from "@/components/server-status"
 import { Timeline, TimelineStep } from "@/components/stage-timeline"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,6 +13,32 @@ import { Textarea } from "@/components/ui/textarea"
 import { ApiError, submitSupportEmail } from "@/lib/api"
 import { verdictBadgeClass } from "@/lib/badge-utils"
 import type { SupportResult } from "@/lib/support-types"
+
+// From backend/scripts/test_support_agent.py - picking one only fills the
+// textarea, the visitor still submits it themselves.
+const SAMPLE_EMAILS = [
+  {
+    label: "Return shoes",
+    value: "Hi, I bought a pair of shoes 3 weeks ago and they just don't fit right. Can I return them for a refund?",
+  },
+  {
+    label: "Cracked blender",
+    value: "My blender arrived yesterday with a cracked lid. Can you help me sort this out?",
+  },
+  {
+    label: "Price match a TV",
+    value:
+      "I found the exact same TV I bought from you two months ago selling for less on another site. Can you " +
+      "match the price and refund me the difference?",
+  },
+  { label: "Late order", value: "Where is my order? It's been 10 days and I haven't received anything." },
+]
+
+const HOW_IT_WORKS = [
+  "The Draft Agent classifies the email and drafts a reply.",
+  "The Policy Checker retrieves the relevant policy sections and checks the draft's claims (timelines, refund eligibility) against them.",
+  "If it rejects the draft, the reply is revised with the cited correction and re-checked, up to two rounds, before the final reply is returned.",
+]
 
 export function SupportForm() {
   const [emailText, setEmailText] = React.useState("")
@@ -52,6 +80,7 @@ export function SupportForm() {
       {/* Section 1: email intake */}
       <div className="shrink-0 border-b border-border/70 p-6 md:w-[24rem] md:overflow-y-auto md:border-r md:border-b-0">
         <div className="flex flex-col gap-3">
+          <SamplePicker samples={SAMPLE_EMAILS} onPick={setEmailText} disabled={isSubmitting} />
           <Textarea
             value={emailText}
             onChange={(event) => setEmailText(event.target.value)}
@@ -71,6 +100,7 @@ export function SupportForm() {
               </>
             )}
           </Button>
+          {isSubmitting && <SlowRequestHint />}
         </div>
 
         {error && (
@@ -89,6 +119,7 @@ export function SupportForm() {
               The Draft Agent&apos;s reply, the Policy Checker&apos;s verdict, and the final result will appear
               here once you process an email.
             </p>
+            <HowItWorks steps={HOW_IT_WORKS} />
           </div>
         )}
 
