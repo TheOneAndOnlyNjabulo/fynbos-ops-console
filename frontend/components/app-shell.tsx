@@ -12,17 +12,18 @@ import {
   MessageCircleQuestion,
 } from "lucide-react"
 
+import { BottomNav } from "@/components/bottom-nav"
 import { ServerStatusBanner } from "@/components/server-status"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useBackendStatus } from "@/hooks/use-backend-status"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/support", label: "Support Inbox", icon: Inbox },
-  { href: "/extract", label: "Document Extraction", icon: FileText },
-  { href: "/meeting-notes", label: "Meeting Notes", icon: ClipboardList },
-  { href: "/chat", label: "Ask a Question", icon: MessageCircleQuestion },
+  { href: "/", label: "Dashboard", shortLabel: "Home", icon: LayoutDashboard },
+  { href: "/support", label: "Support Inbox", shortLabel: "Support", icon: Inbox },
+  { href: "/extract", label: "Document Extraction", shortLabel: "Extract", icon: FileText },
+  { href: "/meeting-notes", label: "Meeting Notes", shortLabel: "Notes", icon: ClipboardList },
+  { href: "/chat", label: "Ask a Question", shortLabel: "Ask", icon: MessageCircleQuestion },
 ]
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -35,7 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-svh flex-col bg-background">
       {/* Flat header: no borders or shadow - whitespace and the pill nav do the separating */}
-      <header className="shrink-0 pt-4">
+      <header className="shrink-0 pt-3 md:pt-4">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground">
@@ -47,7 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </Link>
 
-          <nav className="order-last -mx-1 flex w-full gap-1 overflow-x-auto px-1 md:order-none md:w-auto">
+          <nav className="hidden gap-1 md:flex">
             {NAV_ITEMS.map((item) => {
               const active = pathname === item.href
               const Icon = item.icon
@@ -89,6 +90,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
         {children}
       </main>
+
+      <BottomNav items={NAV_ITEMS} />
     </div>
   )
 }
